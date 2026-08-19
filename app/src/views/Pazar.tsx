@@ -77,8 +77,8 @@ export default function Pazar({ c }: { c: ReturnType<typeof useCoop> }) {
   }, [oku, a, hesap, c.publicClient]);
 
   useEffect(() => {
-    yenile().catch(() => {});
-  }, [yenile]);
+    c.veriYukle(yenile);
+  }, [yenile, c.tazeleSayaci]);
 
   const simdi = BigInt(Math.floor(Date.now() / 1000));
 

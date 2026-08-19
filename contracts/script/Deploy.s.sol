@@ -56,7 +56,7 @@ contract Deploy is Script {
         vm.startBroadcast(pk);
         _deployCore(dagitan);
         _wire();
-        _seedMembers(dagitan);
+        _seedMembers(dagitan, yonetim);
         _handOver(dagitan, yonetim);
         vm.stopBroadcast();
 
@@ -94,11 +94,18 @@ contract Deploy is Script {
         vault.setRecorder(address(market), true);
     }
 
-    function _seedMembers(address dagitan) private {
-        // Dağıtan hesap kurucu ortak olarak kütüğe işlenir ve eğitim belgesi alır;
-        // böylece kurulumdan hemen sonra teklif verilebilir.
+    /// @dev Kurucu ortaklar kütüğe işlenir ve eğitim belgesi alır; böylece
+    ///      kurulumdan hemen sonra havuz açılabilir ve teklif verilebilir.
+    ///      Yönetim adresi dağıtandan farklıysa o da kurucu ortak olur —
+    ///      aksi halde yönetici kendi kooperatifinde işlem yapamazdı.
+    function _seedMembers(address dagitan, address yonetim) private {
         registry.stewardAdmit(dagitan, registry.ROLE_PRODUCER(), "ipfs://uye/kurucu");
         sbt.issue(dagitan, COURSE, "ipfs://sertifika/kurucu");
+
+        if (yonetim != dagitan) {
+            registry.stewardAdmit(yonetim, registry.ROLE_PRODUCER(), "ipfs://uye/yonetim");
+            sbt.issue(yonetim, COURSE, "ipfs://sertifika/yonetim");
+        }
     }
 
     /// @dev Yönetimi hedef adrese GERİ ALINAMAZ biçimde devreder.

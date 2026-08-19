@@ -29,12 +29,13 @@ export type AgTanimi = {
   anahtar: AgAnahtar;
   ad: string;
   chain: Chain;
+  /** Birincil uç nokta. */
   rpc: string;
+  /** Yedekler — biri yanıt vermezse sıradaki denenir. */
+  yedekRpc: string[];
   kasif: string | null;
   adresler: Adresler | null;
 };
-
-const BOS = "0x0000000000000000000000000000000000000000" as const;
 
 /** forge script deterministik dağıttığı için yerel adresler sabittir. */
 const YEREL: Adresler = {
@@ -51,25 +52,42 @@ const YEREL: Adresler = {
   interCoop: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
 };
 
-/** Test ağı adresleri deploy sonrası .env.local ile gelir. */
-function envAdresler(onek: string): Adresler | null {
-  const g = (k: string) => import.meta.env[`VITE_${onek}_${k}`] as string | undefined;
-  const registry = g("REGISTRY");
-  if (!registry || registry === BOS) return null;
-  return {
-    registry: registry as `0x${string}`,
-    pool: g("POOL") as `0x${string}`,
-    market: g("MARKET") as `0x${string}`,
-    vault: g("VAULT") as `0x${string}`,
-    router: g("ROUTER") as `0x${string}`,
-    sbt: g("SBT") as `0x${string}`,
-    gov: g("GOV") as `0x${string}`,
-    community: g("COMMUNITY") as `0x${string}`,
-    reinvestment: g("REINVESTMENT") as `0x${string}`,
-    education: g("EDUCATION") as `0x${string}`,
-    interCoop: g("INTERCOOP") as `0x${string}`,
-  };
-}
+/**
+ * Test ağı adresleri deploy sonrası .env.local ile gelir.
+ * Vite `import.meta.env` erişimlerini derleme sırasında statik olarak
+ * değiştirir; bu yüzden anahtarlar dinamik kurulamaz, tek tek yazılır.
+ */
+const BASE_SEPOLIA: Adresler | null = import.meta.env.VITE_BASE_REGISTRY
+  ? {
+      registry: import.meta.env.VITE_BASE_REGISTRY as `0x${string}`,
+      pool: import.meta.env.VITE_BASE_POOL as `0x${string}`,
+      market: import.meta.env.VITE_BASE_MARKET as `0x${string}`,
+      vault: import.meta.env.VITE_BASE_VAULT as `0x${string}`,
+      router: import.meta.env.VITE_BASE_ROUTER as `0x${string}`,
+      sbt: import.meta.env.VITE_BASE_SBT as `0x${string}`,
+      gov: import.meta.env.VITE_BASE_GOV as `0x${string}`,
+      community: import.meta.env.VITE_BASE_COMMUNITY as `0x${string}`,
+      reinvestment: import.meta.env.VITE_BASE_REINVESTMENT as `0x${string}`,
+      education: import.meta.env.VITE_BASE_EDUCATION as `0x${string}`,
+      interCoop: import.meta.env.VITE_BASE_INTERCOOP as `0x${string}`,
+    }
+  : null;
+
+const ETH_SEPOLIA: Adresler | null = import.meta.env.VITE_SEPOLIA_REGISTRY
+  ? {
+      registry: import.meta.env.VITE_SEPOLIA_REGISTRY as `0x${string}`,
+      pool: import.meta.env.VITE_SEPOLIA_POOL as `0x${string}`,
+      market: import.meta.env.VITE_SEPOLIA_MARKET as `0x${string}`,
+      vault: import.meta.env.VITE_SEPOLIA_VAULT as `0x${string}`,
+      router: import.meta.env.VITE_SEPOLIA_ROUTER as `0x${string}`,
+      sbt: import.meta.env.VITE_SEPOLIA_SBT as `0x${string}`,
+      gov: import.meta.env.VITE_SEPOLIA_GOV as `0x${string}`,
+      community: import.meta.env.VITE_SEPOLIA_COMMUNITY as `0x${string}`,
+      reinvestment: import.meta.env.VITE_SEPOLIA_REINVESTMENT as `0x${string}`,
+      education: import.meta.env.VITE_SEPOLIA_EDUCATION as `0x${string}`,
+      interCoop: import.meta.env.VITE_SEPOLIA_INTERCOOP as `0x${string}`,
+    }
+  : null;
 
 export const AGLAR: Record<AgAnahtar, AgTanimi> = {
   local: {
@@ -77,6 +95,7 @@ export const AGLAR: Record<AgAnahtar, AgTanimi> = {
     ad: "Yerel zincir",
     chain: localChain,
     rpc: "http://127.0.0.1:8545",
+    yedekRpc: [],
     kasif: null,
     adresler: YEREL,
   },
@@ -85,16 +104,22 @@ export const AGLAR: Record<AgAnahtar, AgTanimi> = {
     ad: "Base Sepolia",
     chain: baseSepolia,
     rpc: import.meta.env.VITE_BASE_RPC ?? "https://sepolia.base.org",
+    yedekRpc: [
+      "https://base-sepolia-rpc.publicnode.com",
+      "https://base-sepolia.drpc.org",
+      "https://base-sepolia.gateway.tenderly.co",
+    ],
     kasif: "https://sepolia.basescan.org",
-    adresler: envAdresler("BASE"),
+    adresler: BASE_SEPOLIA,
   },
   sepolia: {
     anahtar: "sepolia",
     ad: "Ethereum Sepolia",
     chain: sepolia,
     rpc: import.meta.env.VITE_SEPOLIA_RPC ?? "https://ethereum-sepolia-rpc.publicnode.com",
+    yedekRpc: ["https://sepolia.drpc.org", "https://rpc.sepolia.org"],
     kasif: "https://sepolia.etherscan.io",
-    adresler: envAdresler("SEPOLIA"),
+    adresler: ETH_SEPOLIA,
   },
 };
 

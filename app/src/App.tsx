@@ -85,7 +85,22 @@ export default function App() {
         </div>
       )}
 
-      {kurulu && !c.hesap && c.cuzdanVar && (
+      {kurulu && c.yukleniyor && !c.okumaHatasi && (
+        <div className="bilgi-kutu yukleniyor">
+          <span className="spinner" /> {c.ag.ad} zincirinden veriler okunuyor…
+        </div>
+      )}
+
+      {c.okumaHatasi && (
+        <div className="uyari-kutu">
+          <b>Zincirden veri okunamadı.</b> {c.okumaHatasi}
+          <button className="tekrar" onClick={c.tekrarDene}>
+            Yeniden dene
+          </button>
+        </div>
+      )}
+
+      {kurulu && !c.hesap && c.cuzdanVar && !c.okumaHatasi && (
         <div className="bilgi-kutu">
           Sayfayı cüzdan bağlamadan da gezebilirsin — tüm veriler zincirden okunuyor.
           İşlem göndermek için cüzdanı bağla.

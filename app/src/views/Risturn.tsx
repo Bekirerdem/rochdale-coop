@@ -68,8 +68,8 @@ export default function RisturnGorunum({ c }: { c: ReturnType<typeof useCoop> })
   }, [oku, a, hesap, c.publicClient]);
 
   useEffect(() => {
-    yenile().catch(() => {});
-  }, [yenile]);
+    c.veriYukle(yenile);
+  }, [yenile, c.tazeleSayaci]);
 
   const yonetimBende = hesap && steward && hesap.toLowerCase() === steward.toLowerCase();
   const bps = (v?: bigint) => (v === undefined ? "—" : `%${Number(v) / 100}`);

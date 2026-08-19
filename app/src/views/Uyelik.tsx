@@ -63,8 +63,8 @@ export default function Uyelik({ c }: { c: ReturnType<typeof useCoop> }) {
   }, [oku, a, hesap]);
 
   useEffect(() => {
-    yenile().catch(() => {});
-  }, [yenile]);
+    c.veriYukle(yenile);
+  }, [yenile, c.tazeleSayaci]);
 
   const yonetimBende = hesap && steward && hesap.toLowerCase() === steward.toLowerCase();
   const bekleyenler = uyeler.filter((u) => u.durum === 1);

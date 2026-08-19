@@ -48,8 +48,8 @@ export default function HavuzGorunum({ c }: { c: ReturnType<typeof useCoop> }) {
   }, [oku, a, hesap]);
 
   useEffect(() => {
-    yenile().catch(() => {});
-  }, [yenile]);
+    c.veriYukle(yenile);
+  }, [yenile, c.tazeleSayaci]);
 
   return (
     <div className="izgara">

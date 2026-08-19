@@ -3,6 +3,7 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
+  fallback,
   http,
   formatEther,
   type Address,
@@ -37,9 +38,22 @@ export function useCoop() {
   const [cuzdanAgi, setCuzdanAgi] = useState<number | null>(null);
   const [islemler, setIslemler] = useState<Islem[]>([]);
   const [mesaj, setMesaj] = useState<string | null>(null);
+  /** Zincirden veri okunamadığında ekranın sessizce boş kalmaması için. */
+  const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
+  const [tazeleSayaci, setTazeleSayaci] = useState(0);
+  const [yukleniyor, setYukleniyor] = useState(true);
 
   const publicClient = useMemo(
-    () => createPublicClient({ chain: ag.chain, transport: http(ag.rpc) }),
+    () =>
+      createPublicClient({
+        chain: ag.chain,
+        // Bir uç nokta yanıt vermezse sıradakine geçilir; tek bir geçici
+        // ağ hatası ekranı boş bırakmasın diye.
+        transport: fallback(
+          [ag.rpc, ...ag.yedekRpc].map((u) => http(u, { timeout: 10_000, retryCount: 2 })),
+          { rank: false },
+        ),
+      }),
     [ag],
   );
 
@@ -191,10 +205,42 @@ export function useCoop() {
     [publicClient],
   );
 
+  /** View'ler bunu çağırır: okuma başarısızsa hata görünür olur. */
+  const veriYukle = useCallback(async (yukle: () => Promise<void>) => {
+    setYukleniyor(true);
+    try {
+      // Uç nokta yanıt vermeyip isteği asılı bırakabilir; kendi süre sınırımız
+      // olmadan ekran sonsuza kadar boş kalır.
+      await Promise.race([
+        yukle(),
+        new Promise((_, red) =>
+          setTimeout(() => red(new Error("Zincir 20 saniyede yanıt vermedi.")), 20_000),
+        ),
+      ]);
+      setOkumaHatasi(null);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      setOkumaHatasi(
+        /fetch|network|timeout|RPC/i.test(m)
+          ? "Zincire ulaşılamadı. Ağ bağlantısını kontrol edip yeniden dene."
+          : m.split(String.fromCharCode(10))[0].slice(0, 160),
+      );
+    } finally {
+      setYukleniyor(false);
+    }
+  }, []);
+
+  const tekrarDene = useCallback(() => setTazeleSayaci((n) => n + 1), []);
+
   return {
     ag,
     agAnahtar,
     agDegistir,
+    veriYukle,
+    okumaHatasi,
+    yukleniyor,
+    tekrarDene,
+    tazeleSayaci,
     publicClient,
     hesap,
     cuzdanVar,

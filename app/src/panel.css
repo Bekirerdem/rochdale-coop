@@ -376,3 +376,31 @@ main { padding-top: 28px; }
 
 .senaryo-sayfa { padding: 0; }
 .senaryo-sayfa .ust { padding-top: 0; border-bottom: none; }
+
+.tekrar {
+  display: inline-block;
+  margin-left: 12px;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--seal);
+  background: var(--surface);
+  border: 1px solid var(--seal);
+  border-radius: 3px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.tekrar:hover { background: var(--seal); color: var(--surface); }
+
+.bilgi-kutu.yukleniyor { display: flex; align-items: center; gap: 10px; }
+.spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--rule-strong);
+  border-top-color: var(--seal);
+  border-radius: 50%;
+  animation: don 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+@keyframes don { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
