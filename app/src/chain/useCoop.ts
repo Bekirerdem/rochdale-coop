@@ -26,7 +26,12 @@ function saglayici(): Eip1193 | null {
 export type Islem = {
   hash: Hash;
   etiket: string;
-  durum: "bekliyor" | "tamam" | "hata";
+  /**
+   * "belirsiz": işlem zincire gönderildi ama makbuz okunamadı (uç nokta
+   * geçici olarak yanıt vermiyor olabilir). Bu BAŞARISIZ DEMEK DEĞİLDİR —
+   * işlem büyük olasılıkla geçti; kullanıcıyı yanıltmamak için ayrı durum.
+   */
+  durum: "bekliyor" | "tamam" | "hata" | "belirsiz";
   hata?: string;
 };
 
@@ -182,8 +187,9 @@ export function useCoop() {
       const yeni: Islem = { hash, etiket, durum: "bekliyor" };
       setIslemler((l) => [yeni, ...l].slice(0, 25));
 
+      // Makbuzu sabırla bekle: uç nokta düşse bile işlem zincirde olabilir.
       publicClient
-        .waitForTransactionReceipt({ hash })
+        .waitForTransactionReceipt({ hash, timeout: 120_000, retryCount: 8, retryDelay: 2_500 })
         .then((r) =>
           setIslemler((l) =>
             l.map((i) =>
@@ -192,7 +198,14 @@ export function useCoop() {
           ),
         )
         .catch(() =>
-          setIslemler((l) => l.map((i) => (i.hash === hash ? { ...i, durum: "hata" } : i))),
+          // Makbuz okunamadı — "başarısız" demek yanıltıcı olur.
+          setIslemler((l) =>
+            l.map((i) =>
+              i.hash === hash
+                ? { ...i, durum: "belirsiz", hata: "Makbuz okunamadı; işlem geçmiş olabilir." }
+                : i,
+            ),
+          ),
         );
 
       return hash;

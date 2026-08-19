@@ -57,8 +57,26 @@ export default function HavuzGorunum({ c }: { c: ReturnType<typeof useCoop> }) {
         baslik="Yeni ortak arz havuzu"
         not="Havuz, üreticilerin ürününü tek bir arz olarak birleştirir. Satış olduğunda tüm üreticiler payları oranında etkilenir."
       >
-        <Alan etiket="Ürün tanımı" deger={bilgi} degistir={setBilgi} ipucu="2026 erken hasat, Ayvalık" />
-        <Alan etiket="Litre fiyatı (ETH)" deger={fiyat} degistir={setFiyat} ipucu="0.001" />
+        <Alan
+          etiket="Ürün tanımı"
+          deger={bilgi}
+          degistir={setBilgi}
+          ipucu="2026 erken hasat, Ayvalık"
+          yardim="Hasat yılı, menşe, kalite — havuzda ne olduğunu anlatır."
+        />
+        <Alan
+          etiket="Bir litrenin fiyatı (ETH)"
+          deger={fiyat}
+          degistir={setFiyat}
+          ipucu="0.002"
+          tip="number"
+          yardim="Litre BAŞINA fiyat. Kaç litre getirdiğini havuz açıldıktan sonra gireceksin."
+          uyari={
+            Number(fiyat) >= 1
+              ? `${fiyat} ETH bir litre için çok yüksek — litre sayısı ile karıştırmış olabilirsin.`
+              : null
+          }
+        />
         <Islem
           etiket="Havuz aç"
           kapali={!uye}
@@ -93,6 +111,7 @@ export default function HavuzGorunum({ c }: { c: ReturnType<typeof useCoop> }) {
             degistir={(v) => setLitre((s) => ({ ...s, [String(p.id)]: v }))}
             ipucu="60"
             tip="number"
+            yardim={`Getirdiğin ürün miktarı. Bu havuzda litresi ${formatEther(p.fiyat)} ETH.`}
           />
           <div className="eylem-satir">
             <Islem

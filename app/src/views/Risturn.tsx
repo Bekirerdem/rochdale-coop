@@ -77,11 +77,11 @@ export default function RisturnGorunum({ c }: { c: ReturnType<typeof useCoop> })
   return (
     <div className="izgara">
       <Kart baslik="Fonlar" not="Her satışın geliri bu beş fona bölünür. Oranları yalnızca üye oylaması değiştirir.">
-        <Satir etiket={`Risturn kasası ${bps(oranlar[0])}`}>{formatEther(kasa)} ETH</Satir>
-        <Satir etiket={`Topluluk fonu ${bps(oranlar[1])}`}>{formatEther(fonlar.topluluk ?? 0n)} ETH</Satir>
-        <Satir etiket={`Yeniden yatırım ${bps(oranlar[2])}`}>{formatEther(fonlar.yatirim ?? 0n)} ETH</Satir>
-        <Satir etiket={`Eğitim fonu ${bps(oranlar[3])}`}>{formatEther(fonlar.egitim ?? 0n)} ETH</Satir>
-        <Satir etiket={`Dayanışma ${bps(oranlar[4])}`}>{formatEther(fonlar.dayanisma ?? 0n)} ETH</Satir>
+        <Satir etiket="Risturn kasası" ek={bps(oranlar[0])}>{formatEther(kasa)} ETH</Satir>
+        <Satir etiket="Topluluk fonu" ek={bps(oranlar[1])}>{formatEther(fonlar.topluluk ?? 0n)} ETH</Satir>
+        <Satir etiket="Yeniden yatırım" ek={bps(oranlar[2])}>{formatEther(fonlar.yatirim ?? 0n)} ETH</Satir>
+        <Satir etiket="Eğitim fonu" ek={bps(oranlar[3])}>{formatEther(fonlar.egitim ?? 0n)} ETH</Satir>
+        <Satir etiket="Dayanışma" ek={bps(oranlar[4])}>{formatEther(fonlar.dayanisma ?? 0n)} ETH</Satir>
       </Kart>
 
       {yonetimBende && (

@@ -10,6 +10,27 @@ değiştiremez, yalnızca genel kurul değiştirir.
 Ömür Demirel'in kavramsal modeli üzerine kurulmuştur.
 Mimari ayrıntısı: [`docs/mimari.md`](docs/mimari.md)
 
+## Neden önemli
+
+Bir kooperatif 1.000 kg natürel sızma zeytinyağı sattı. Tariş'in 2025/26 alım
+fiyatıyla (0,8 asit, 366 TL/kg) bu **366.000 TL** eder. Dağıtım kuralı gereği
+yarısı, **183.000 TL**, üyelere geri döner.
+
+İki ortak: Ali 600 kg getirdi ama sermayesi 10.000 TL. Veli 400 kg getirdi,
+sermayesi 90.000 TL.
+
+| | Kooperatif — işlem hacmine göre | Şirket — sermaye payına göre |
+|---|---:|---:|
+| **Ali** (600 kg) | **109.800 TL** | 18.300 TL |
+| **Veli** (400 kg) | **73.200 TL** | 164.700 TL |
+
+Aynı hasat, aynı iki ortak, aynı 183.000 TL. Ali'nin eline geçen para altı katına
+çıkıyor — tek fark, kârı hangi kuralın böldüğü. Bu kuralı bu depodaki sözleşmeler
+uyguluyor ve kurucu dahil kimse tek başına değiştiremiyor.
+
+> Sözleşmeler test ağında çalıştığı için tutarlar ETH cinsindendir; oranlar
+> yukarıdakiyle birebir aynıdır.
+
 ## Ne yapabilirsin
 
 Arayüz beş bölümden oluşur ve **zincire yazan her eylem kendi cüzdanınla

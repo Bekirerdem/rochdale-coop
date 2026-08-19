@@ -7,6 +7,7 @@ import Pazar from "./views/Pazar";
 import RisturnGorunum from "./views/Risturn";
 import Yonetisim from "./views/Yonetisim";
 import Senaryo from "./views/Senaryo";
+import Akis from "./views/Akis";
 import "./App.css";
 import "./panel.css";
 
@@ -107,6 +108,10 @@ export default function App() {
         </div>
       )}
 
+      {kurulu && !c.okumaHatasi && (
+        <Akis c={c} sekmeyeGit={(x) => setSekme(x as SekmeK)} />
+      )}
+
       <nav className="sekmeler">
         {sekmeler.map((s) => (
           <button
@@ -151,7 +156,9 @@ export default function App() {
                       ? "onay bekleniyor"
                       : i.durum === "tamam"
                         ? "onaylandı"
-                        : "başarısız"}
+                        : i.durum === "belirsiz"
+                          ? "doğrulanamadı — kâşifte bak"
+                          : "başarısız"}
                   </span>
                 </li>
               );

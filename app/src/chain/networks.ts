@@ -103,11 +103,13 @@ export const AGLAR: Record<AgAnahtar, AgTanimi> = {
     anahtar: "baseSepolia",
     ad: "Base Sepolia",
     chain: baseSepolia,
-    rpc: import.meta.env.VITE_BASE_RPC ?? "https://sepolia.base.org",
+    // Resmî uç nokta (sepolia.base.org) zaman zaman 503 döndürüyor; bu
+    // yüzden birincil değil. Sıra, gözlemlenen güvenilirliğe göre.
+    rpc: import.meta.env.VITE_BASE_RPC ?? "https://base-sepolia-rpc.publicnode.com",
     yedekRpc: [
-      "https://base-sepolia-rpc.publicnode.com",
-      "https://base-sepolia.drpc.org",
+      "https://sepolia.base.org",
       "https://base-sepolia.gateway.tenderly.co",
+      "https://base-sepolia.drpc.org",
     ],
     kasif: "https://sepolia.basescan.org",
     adresler: BASE_SEPOLIA,

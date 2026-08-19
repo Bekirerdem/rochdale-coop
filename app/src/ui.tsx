@@ -22,10 +22,22 @@ export function Kart({
   );
 }
 
-export function Satir({ etiket, children }: { etiket: string; children: ReactNode }) {
+export function Satir({
+  etiket,
+  ek,
+  children,
+}: {
+  etiket: string;
+  /** Etiketin yanında duran ikincil bilgi (oran vb.) — değerle karışmasın diye ayrı. */
+  ek?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="satir">
-      <span>{etiket}</span>
+      <span>
+        {etiket}
+        {ek && <em className="satir-ek">{ek}</em>}
+      </span>
       <b>{children}</b>
     </div>
   );
@@ -36,18 +48,25 @@ export function Alan({
   deger,
   degistir,
   ipucu,
+  yardim,
+  uyari,
   tip = "text",
 }: {
   etiket: string;
   deger: string;
   degistir: (v: string) => void;
   ipucu?: string;
+  /** Alanın altında duran açıklama — ne girileceği belirsizse şart. */
+  yardim?: string;
+  /** Girilen değer teknik olarak geçerli ama muhtemelen yanlışsa. */
+  uyari?: string | null;
   tip?: string;
 }) {
   return (
     <label className="alan">
       <span>{etiket}</span>
       <input type={tip} value={deger} onChange={(e) => degistir(e.target.value)} placeholder={ipucu} />
+      {uyari ? <small className="alan-uyari">{uyari}</small> : yardim ? <small className="alan-yardim">{yardim}</small> : null}
     </label>
   );
 }
@@ -130,6 +149,17 @@ export function temizHata(e: unknown): string {
     [/ZeroUnits|ZeroAddress/, "Geçersiz değer."],
     [/insufficient funds/i, "Cüzdanda yeterli test ETH yok."],
     [/chain.*mismatch|does not match/i, "Cüzdan yanlış ağda."],
+    // İşlem zincire gitti ama makbuz okunamadı — başarısız DEĞİL.
+    [
+      /receipt.*could not be found|Transaction may not be processed/i,
+      "İşlem gönderildi ama onayı henüz okunamadı. Aşağıdaki listeden kâşifte kontrol edebilirsin — büyük olasılıkla geçti.",
+    ],
+    [
+      /no backend is currently healthy|503|Service Unavailable/i,
+      "Ağ uç noktası geçici olarak yanıt vermiyor. Birkaç saniye sonra tekrar dene.",
+    ],
+    [/nonce too low/i, "Bu işlem zaten gönderilmiş görünüyor."],
+    [/replacement transaction underpriced/i, "Önceki işlem hâlâ bekliyor; onaylanmasını bekle."],
   ];
 
   for (const [kalip, mesaj] of sozluk) if (kalip.test(m)) return mesaj;

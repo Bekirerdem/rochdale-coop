@@ -42,7 +42,9 @@ export default function Pazar({ c }: { c: ReturnType<typeof useCoop> }) {
 
   const [havuzId, setHavuzId] = useState("1");
   const [litre, setLitre] = useState("100");
-  const [fiyat, setFiyat] = useState("0.001");
+  const [fiyat, setFiyat] = useState("");
+  const [havuzFiyati, setHavuzFiyati] = useState<bigint | null>(null);
+  const [havuzStok, setHavuzStok] = useState<bigint>(0n);
   const [alim, setAlim] = useState<Record<string, string>>({});
 
   const yenile = useCallback(async () => {
@@ -74,7 +76,19 @@ export default function Pazar({ c }: { c: ReturnType<typeof useCoop> }) {
     setTakaslar(xl.reverse());
 
     if (hesap) setUye(await oku<boolean>("registry", a.registry, "isActiveMember", [hesap]));
-  }, [oku, a, hesap, c.publicClient]);
+
+    // Teklif fiyatı boşsa havuzun kendi fiyatını başlangıç değeri yap —
+    // kullanıcı rastgele bir sayı yazmak zorunda kalmasın.
+    const hid = BigInt(havuzId || "0");
+    if (hid > 0n) {
+      const hp = await oku<[boolean, string, bigint, bigint, bigint]>(
+        "pool", a.pool, "pools", [hid],
+      );
+      setHavuzFiyati(hp[2]);
+      setHavuzStok(hp[3] - hp[4]);
+      setFiyat((mevcut) => (mevcut === "" && hp[2] > 0n ? formatEther(hp[2]) : mevcut));
+    }
+  }, [oku, a, hesap, c.publicClient, havuzId]);
 
   useEffect(() => {
     c.veriYukle(yenile);
@@ -89,12 +103,41 @@ export default function Pazar({ c }: { c: ReturnType<typeof useCoop> }) {
         not="Teklifi açan üye kendi ürününü değil, havuzun ürününü satar. Gelir tek satıcıya değil, havuza katkı veren herkese dağılır."
       >
         <Alan etiket="Havuz numarası" deger={havuzId} degistir={setHavuzId} tip="number" />
-        <Alan etiket="Satılacak litre" deger={litre} degistir={setLitre} tip="number" />
-        <Alan etiket="Litre fiyatı (ETH)" deger={fiyat} degistir={setFiyat} />
+        <Alan
+          etiket="Satılacak litre"
+          deger={litre}
+          degistir={setLitre}
+          tip="number"
+          yardim={`Havuzda satışa hazır ${String(havuzStok)} L var.`}
+          uyari={
+            havuzStok === 0n
+              ? "Havuzda ürün yok — önce Ortak Havuz sekmesinden ürün ekle."
+              : BigInt(litre || "0") > havuzStok
+                ? `Havuzda yalnızca ${String(havuzStok)} L var.`
+                : null
+          }
+        />
+        <Alan
+          etiket="Bir litrenin satış fiyatı (ETH)"
+          deger={fiyat}
+          degistir={setFiyat}
+          tip="number"
+          yardim={
+            havuzFiyati !== null
+              ? `Havuzun kayıtlı fiyatı ${formatEther(havuzFiyati)} ETH. Farklı satabilirsin.`
+              : undefined
+          }
+        />
         <Islem
           etiket="Teklifi yayınla"
-          kapali={!uye}
-          kapaliNeden={!hesap ? "Önce cüzdanı bağla" : !uye ? "Yalnızca ortaklar teklif açabilir" : undefined}
+          kapali={!uye || havuzStok === 0n || BigInt(litre || "0") > havuzStok}
+          kapaliNeden={
+            !hesap ? "Önce cüzdanı bağla"
+            : !uye ? "Yalnızca ortaklar teklif açabilir"
+            : havuzStok === 0n ? "Havuzda satılacak ürün yok"
+            : BigInt(litre || "0") > havuzStok ? "Havuzdaki ürün yetmiyor"
+            : undefined
+          }
           calistir={async () => {
             const h = await yaz("Satış teklifi", "market", a.market, "createOffer", [
               BigInt(havuzId), BigInt(litre), parseEther(fiyat || "0"), "ipfs://teklif",
