@@ -10,6 +10,8 @@ import {RochdaleMath} from "./libraries/RochdaleMath.sol";
 contract TreasuryRouter {
     using RochdaleMath for RochdaleMath.DistributionPolicy;
 
+    enum Fon { Topluluk, YenidenYatirim, Egitim, Dayanisma }
+
     address public steward;
     bool public governanceLocked;
 
@@ -38,7 +40,7 @@ contract TreasuryRouter {
         uint256 educationBps,
         uint256 interCoopBps
     );
-    event TreasuryUpdated(string indexed name, address indexed target);
+    event TreasuryUpdated(uint8 indexed fon, address indexed target);
     event GovernanceLocked(address indexed governance);
 
     error OnlySteward();
@@ -143,16 +145,16 @@ contract TreasuryRouter {
         );
     }
 
-    function setCommunityTreasury(address target) external onlySteward {
+    /// @notice Fon adreslerini günceller. Dördü de aynı kapıdan geçer —
+    ///         önceden yalnızca ikisinin güncelleyicisi vardı, diğer ikisi
+    ///         bozulduğunda satış geliri kalıcı olarak dağıtılamaz hale gelirdi.
+    function setTreasury(Fon fon, address target) external onlySteward {
         if (target == address(0)) revert ZeroAddress();
-        communityTreasury = target;
-        emit TreasuryUpdated("community", target);
-    }
-
-    function setEducationTreasury(address target) external onlySteward {
-        if (target == address(0)) revert ZeroAddress();
-        educationTreasury = target;
-        emit TreasuryUpdated("education", target);
+        if (fon == Fon.Topluluk) communityTreasury = target;
+        else if (fon == Fon.YenidenYatirim) reinvestmentTreasury = target;
+        else if (fon == Fon.Egitim) educationTreasury = target;
+        else interCoopTreasury = target;
+        emit TreasuryUpdated(uint8(fon), target);
     }
 
     // ---------------------------------------------------------------- iç

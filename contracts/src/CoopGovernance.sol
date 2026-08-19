@@ -164,8 +164,12 @@ contract CoopGovernance {
         emit VotingPeriodUpdated(newPeriod);
     }
 
+    /// @dev Alt sınır, yeter sayının bir oylamayla sıfırlanıp yönetişimin
+    ///      tek kişilik hale getirilmesini engeller.
+    uint256 public constant MIN_QUORUM_BPS = 1_000; // %10
+
     function setQuorumBps(uint256 newQuorumBps) external onlySelf {
-        if (newQuorumBps > 10_000) revert InvalidQuorum();
+        if (newQuorumBps > 10_000 || newQuorumBps < MIN_QUORUM_BPS) revert InvalidQuorum();
         quorumBps = newQuorumBps;
         emit QuorumUpdated(newQuorumBps);
     }

@@ -34,14 +34,12 @@ contract PatronageVault {
     event RevenueReceived(uint256 indexed period, uint256 amount, uint256 total);
     event PeriodClosed(uint256 indexed period, uint256 totalUnits, uint256 revenue);
     event RefundClaimed(uint256 indexed period, address indexed member, uint256 amount);
-    event DustSwept(uint256 indexed period, address indexed to, uint256 amount);
     event GovernanceLocked(address indexed governance);
 
     error OnlySteward();
     error OnlyRecorder();
     error AlreadyLocked();
     error ZeroAddress();
-    error NotMember();
     error ZeroUnits();
     error NoRevenue();
     error PeriodNotClosed();
@@ -91,9 +89,15 @@ contract PatronageVault {
 
     /// @notice Üyenin kooperatifle yaptığı işlem hacmini döneme işler.
     /// @dev Satış kesinleştiğinde CoopMarket tarafından çağrılır.
+    ///
+    ///      Burada BİLEREK üyelik kontrolü yapılmaz. Hak, ürün havuza konduğu
+    ///      anda doğar; üretici sonradan ayrılsa bile emeğinin karşılığı durur.
+    ///      Kontrol konulduğunda, havuza katkı vermiş tek bir üyenin ayrılması
+    ///      o havuzdan yapılan satışı kilitliyor ve alıcının bedeli emanette
+    ///      hapsoluyordu.
     function recordPatronage(address member, uint256 units) external onlyRecorder {
         if (units == 0) revert ZeroUnits();
-        if (!registry.isActiveMember(member)) revert NotMember();
+        if (member == address(0)) revert ZeroAddress();
 
         Period storage p = periods[currentPeriod];
         if (p.closed) revert PeriodAlreadyClosed();
@@ -157,22 +161,10 @@ contract PatronageVault {
         emit RefundClaimed(period, msg.sender, amount);
     }
 
-    /// @notice Tam bölünemeyen küsuratı kooperatif hazinesine aktarır.
-    /// @dev Yalnızca kapanmış dönemler için ve yalnızca yönetişim kararıyla.
-    function sweepDust(uint256 period, address to) external onlySteward {
-        Period storage p = periods[period];
-        if (!p.closed) revert PeriodNotClosed();
-        if (to == address(0)) revert ZeroAddress();
-
-        uint256 dust = p.revenue - p.claimed;
-        if (dust == 0) revert NothingToClaim();
-
-        p.claimed = p.revenue;
-        (bool ok,) = payable(to).call{value: dust}("");
-        if (!ok) revert TransferFailed();
-
-        emit DustSwept(period, to, dust);
-    }
+    // Not: Bölmeden kalan küsurat (wei mertebesinde) kasada bırakılır ve bir
+    // sonraki dönemin matrahına eklenir. Küsuratı dışarı aktaran bir fonksiyon
+    // BİLEREK yoktur: "kalan" hesabı, üyeler paylarını çekmeden çağrıldığında
+    // dönemin tüm gelirini boşaltmaya yarıyordu.
 
     // ---------------------------------------------------------------- karşılaştırma
 

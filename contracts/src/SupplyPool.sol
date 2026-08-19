@@ -228,7 +228,9 @@ contract SupplyPool {
                 shares[filled] = ConsumedShare({producer: producer, units: take});
                 filled++;
             }
-            emit UnitsConsumed(poolId, producer, take);
+            // Not: olay 1. geçişte zaten yayımlandıysa tekrar yayımlanmaz —
+            // dışarıdan dinleyen sistem aynı tüketimi iki kez saymasın.
+            if (!merged) emit UnitsConsumed(poolId, producer, take);
         }
 
         p.reservedUnits -= units;
@@ -244,10 +246,6 @@ contract SupplyPool {
 
     function producersOf(uint256 poolId) external view returns (address[] memory) {
         return _producers[poolId];
-    }
-
-    function producerCount(uint256 poolId) external view returns (uint256) {
-        return _producers[poolId].length;
     }
 
     function freeUnitsOf(uint256 poolId, address producer) external view returns (uint256) {
