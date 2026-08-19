@@ -1,0 +1,21 @@
+# bağımlılıklar
+node_modules/
+contracts/lib/
+
+# derleme çıktıları
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+app/dist/
+app/node_modules/
+
+# ortam
+.env
+.env.local
+*.local
+
+# araçlar
+.DS_Store
+*.log
+.vscode/
+.idea/

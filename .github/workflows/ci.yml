@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contracts:
+    name: Sözleşmeler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Foundry kurulumu
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Derle
+        run: forge build --sizes
+        working-directory: contracts
+
+      - name: Testler
+        run: forge test -vv
+        working-directory: contracts
+
+      - name: Biçim kontrolü
+        run: forge fmt --check
+        working-directory: contracts
+        continue-on-error: true
+
+  app:
+    name: Arayüz
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Bağımlılıklar
+        run: bun install --frozen-lockfile
+        working-directory: app
+
+      - name: Tip kontrolü ve derleme
+        run: bun run build
+        working-directory: app
