@@ -1,6 +1,5 @@
 # bağımlılıklar
 node_modules/
-contracts/lib/
 
 # derleme çıktıları
 contracts/out/
