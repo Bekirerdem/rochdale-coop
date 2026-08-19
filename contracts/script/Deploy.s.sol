@@ -14,21 +14,31 @@ import {CoopGovernance} from "../src/CoopGovernance.sol";
 ///      Gerçek kurulumda bunların yerine Aragon OSx DAO hazinesi konur.
 contract CoopTreasury {
     string public label;
-    constructor(string memory _label) { label = _label; }
+
+    constructor(string memory _label) {
+        label = _label;
+    }
+
     receive() external payable {}
 }
 
 /// @title Deploy — kurulum ve yetki devri
-/// @notice Sıra önemlidir: sözleşmeler kurucu yetkisiyle doğar, bağlantılar kurulur,
-///         en son yönetim GERİ ALINAMAZ biçimde üye oylamasına kilitlenir.
+/// @notice Sıra önemlidir. Sözleşmeler dağıtımı yapan cüzdanın yetkisiyle doğar,
+///         bağlantılar ve kurucu kayıtlar o yetkiyle kurulur, EN SON yönetim
+///         devredilir. Devir tek yönlüdür; sonrasında dağıtım cüzdanının
+///         hiçbir ayrıcalığı kalmaz.
+///
+/// Ortam değişkenleri:
+///   PRIVATE_KEY  — dağıtımı yapacak cüzdan (tek kullanımlık olması önerilir)
+///   STEWARD      — kooperatif yönetiminin devredileceği adres (varsayılan: dağıtan)
 contract Deploy is Script {
     // Stack derinliğini aşmamak için dağıtılan adresler durumda tutulur.
-    CoopRegistry   registry;
-    EducationSBT   sbt;
+    CoopRegistry registry;
+    EducationSBT sbt;
     PatronageVault vault;
     TreasuryRouter router;
-    SupplyPool     pool;
-    CoopMarket     market;
+    SupplyPool pool;
+    CoopMarket market;
     CoopGovernance gov;
 
     CoopTreasury community;
@@ -40,29 +50,31 @@ contract Deploy is Script {
 
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(pk);
+        address dagitan = vm.addr(pk);
+        address yonetim = vm.envOr("STEWARD", dagitan);
 
         vm.startBroadcast(pk);
-        _deployCore(deployer);
+        _deployCore(dagitan);
         _wire();
-        _seedMembers(deployer);
+        _seedMembers(dagitan);
+        _handOver(dagitan, yonetim);
         vm.stopBroadcast();
 
-        _report();
+        _report(yonetim, dagitan);
     }
 
-    function _deployCore(address deployer) private {
-        community    = new CoopTreasury("topluluk");
+    function _deployCore(address dagitan) private {
+        community = new CoopTreasury("topluluk");
         reinvestment = new CoopTreasury("yeniden-yatirim");
-        education    = new CoopTreasury("egitim");
-        interCoop    = new CoopTreasury("dayanisma");
+        education = new CoopTreasury("egitim");
+        interCoop = new CoopTreasury("dayanisma");
 
-        registry = new CoopRegistry(unicode"Ayvalık Zeytinyağı Kooperatifi", deployer);
-        sbt      = new EducationSBT(deployer);
-        vault    = new PatronageVault(registry, deployer);
+        registry = new CoopRegistry(unicode"Ayvalık Zeytinyağı Kooperatifi", dagitan);
+        sbt = new EducationSBT(dagitan);
+        vault = new PatronageVault(registry, dagitan);
 
         router = new TreasuryRouter(
-            deployer,
+            dagitan,
             address(vault),
             address(community),
             address(reinvestment),
@@ -70,44 +82,41 @@ contract Deploy is Script {
             address(interCoop)
         );
 
-        pool   = new SupplyPool(registry, deployer);
-        market = new CoopMarket(registry, pool, vault, router, deployer);
-        gov    = new CoopGovernance(registry, sbt);
+        pool = new SupplyPool(registry, dagitan);
+        market = new CoopMarket(registry, pool, vault, router, dagitan);
+        gov = new CoopGovernance(registry, sbt);
     }
 
+    /// @dev Pazarın havuzda rezervasyon ve kasada hacim kaydı yapabilmesi için
+    ///      gereken yetkiler. Yönetim devrinden ÖNCE kurulmalıdır.
     function _wire() private {
         pool.setMarketOperator(address(market), true);
         vault.setRecorder(address(market), true);
     }
 
-    function _seedMembers(address deployer) private {
-        address[4] memory founders = [
-            0x70997970C51812dc3A010C7d01b50e0d17dc79C8, // Ali   — uretici
-            0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC, // Veli  — uretici
-            0x90F79bf6EB2c4f870365E785982E1f101E93b906, // Ayse  — uretici
-            0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65  // Alici — toptanci
-        ];
-
-        registry.stewardAdmit(deployer, registry.ROLE_PRODUCER(), "ipfs://uye/kurucu");
-        sbt.issue(deployer, COURSE, "ipfs://sertifika/kurucu");
-
-        for (uint256 i = 0; i < 4; i++) {
-            bytes32 role = i == 3 ? registry.ROLE_CONSUMER() : registry.ROLE_PRODUCER();
-            registry.stewardAdmit(founders[i], role, "ipfs://uye");
-            if (i < 3) sbt.issue(founders[i], COURSE, "ipfs://sertifika");
-        }
-
-        // Sermaye payları — SADECE karşılaştırma tablosu için, oy gücü DEĞİL.
-        registry.recordCapital(founders[0], 10_000);  // Ali:  az sermaye, çok emek
-        registry.recordCapital(founders[1], 90_000);  // Veli: çok sermaye, az emek
-
-        // Dağıtım oranları — kooperatifin "anayasası" — kurucudan alınıp kalıcı
-        // olarak üye oylamasına devredilir. Bu andan sonra risturn payını
-        // kurucu bile tek başına değiştiremez; yalnızca genel kurul kararı değiştirir.
-        router.lockGovernance(address(gov));
+    function _seedMembers(address dagitan) private {
+        // Dağıtan hesap kurucu ortak olarak kütüğe işlenir ve eğitim belgesi alır;
+        // böylece kurulumdan hemen sonra teklif verilebilir.
+        registry.stewardAdmit(dagitan, registry.ROLE_PRODUCER(), "ipfs://uye/kurucu");
+        sbt.issue(dagitan, COURSE, "ipfs://sertifika/kurucu");
     }
 
-    function _report() private view {
+    /// @dev Yönetimi hedef adrese GERİ ALINAMAZ biçimde devreder.
+    ///      Dağıtım oranları doğrudan genel kurula (CoopGovernance) kilitlenir —
+    ///      kooperatifin anayasası olduğu için ilk kilitlenmesi gereken yer orasıdır.
+    function _handOver(address dagitan, address yonetim) private {
+        router.lockGovernance(address(gov));
+
+        if (yonetim != dagitan) {
+            registry.lockGovernance(yonetim);
+            pool.lockGovernance(yonetim);
+            vault.lockGovernance(yonetim);
+            market.lockGovernance(yonetim);
+            sbt.lockGovernance(yonetim);
+        }
+    }
+
+    function _report(address yonetim, address dagitan) private view {
         console.log("");
         console.log("=== ROCHDALE KOOPERATIF PROTOKOLU ===");
         console.log("CoopRegistry   :", address(registry));
@@ -123,7 +132,13 @@ contract Deploy is Script {
         console.log("Egitim         :", address(education));
         console.log("Dayanisma      :", address(interCoop));
         console.log("");
-        console.log("NOT: yonetim kilidi (lockGovernance) demo icin BILINCLI atilmadi.");
-        console.log("Gercek kurulumda kilit son adimdir ve geri alinamaz.");
+        console.log("Kooperatif yonetimi :", yonetim);
+        console.log("Dagitimi yapan      :", dagitan);
+        if (yonetim != dagitan) {
+            console.log("Yonetim devredildi; dagitim cuzdaninin yetkisi kalmadi.");
+        } else {
+            console.log("Yonetim dagitim cuzdaninda. Uretimde STEWARD ile ayirin.");
+        }
+        console.log("Dagitim oranlari kalici olarak genel kurula kilitlendi.");
     }
 }

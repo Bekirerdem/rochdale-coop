@@ -19,3 +19,4 @@ app/node_modules/
 *.log
 .vscode/
 .idea/
+.gstack/
