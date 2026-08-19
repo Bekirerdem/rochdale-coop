@@ -243,6 +243,13 @@ export default function Senaryo() {
         </div>
       )}
 
+      <div className="bilgi-kutu" style={{marginBottom: "18px"}}>
+        Tutarlar <b>test ağı ETH'si</b> cinsindendir, gerçek piyasa fiyatı değildir —
+        senaryo oranları göstermek için kurgulanmıştır. Gerçek fiyatlarla hesap:
+        1.000 kg zeytinyağı × 366 TL (Tariş 2025/26 alım fiyatı) = 366.000 TL; risturn
+        payı 183.000 TL, Ali'ye 109.800 TL, Veli'ye 73.200 TL.
+      </div>
+
       <div className="govde">
         {/* --------------------------------------------------- senaryo */}
         <section className="adimlar">
