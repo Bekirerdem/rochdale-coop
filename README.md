@@ -61,7 +61,24 @@ ve dağıtımı yapan hesabı içe aktar — o hesap kooperatif yönetimidir.
 Yerel ağda ayrıca bir **Sunum** sekmesi görünür: sekiz adımlı senaryoyu tek
 tıkla oynatır, anlatım için hazırlanmıştır.
 
-### Test ağında çalıştırma
+### Canlı dağıtım — Base Sepolia
+
+Sözleşmeler Base Sepolia üzerinde çalışıyor:
+
+| Sözleşme | Adres |
+|---|---|
+| CoopRegistry | [`0x8fb57F14…fFFd`](https://sepolia.basescan.org/address/0x8fb57F144EdD7C3d30221723bb44c6d07F38fFFd) |
+| SupplyPool | [`0xFF116737…D6b2`](https://sepolia.basescan.org/address/0xFF11673737F7f4eE0e909f9Bb6F445e4a9d5D6b2) |
+| CoopMarket | [`0x885d4252…494c`](https://sepolia.basescan.org/address/0x885d42520815442E5FC84f36a4e00b5d56D2494c) |
+| PatronageVault | [`0xd1c41f8B…109c`](https://sepolia.basescan.org/address/0xd1c41f8B8e4f7F14E7071D0dd80A504C9cE9109c) |
+| TreasuryRouter | [`0x22BA299a…7164`](https://sepolia.basescan.org/address/0x22BA299ad477e30c9e71Fc65552ae8C0d0197164) |
+| EducationSBT | [`0x586a9384…5A90`](https://sepolia.basescan.org/address/0x586a93844F9f301ED54b17eD9Ec81e3C23525A90) |
+| CoopGovernance | [`0x72dbBEC4…4a6B`](https://sepolia.basescan.org/address/0x72dbBEC4dF017e02EbdD2dbFaDFEa14e24ef4a6B) |
+
+Dağıtım oranları kurulumda kalıcı olarak `CoopGovernance`'a kilitlendi; risturn
+payını kurucu dahil kimse tek başına değiştiremez.
+
+### Kendi test ağına dağıtma
 
 Base Sepolia veya Ethereum Sepolia:
 
